@@ -26,7 +26,7 @@ MYSQL_DB_NAME = os.environ.get("MYSQL_DB_NAME")
 MYSQL_IP =  os.environ.get("MYSQL_IP")
 MYSQL_USER = os.environ.get("MYSQL_DB_USER")
 MYSQL_PASSWORD = os.environ.get("MYSQL_DB_PASSWORD")
-
+AI_KEY = os.environ.get("AI_KEY")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -85,10 +85,15 @@ WSGI_APPLICATION = 'housing_settings.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME':MYSQL_DB_NAME,
+        'USER': MYSQL_USER,
+        'PASSWORD': MYSQL_PASSWORD,
+        'HOST': MYSQL_IP,
+        'PORT': '3306', 
     }
 }
 

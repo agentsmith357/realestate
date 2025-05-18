@@ -8,7 +8,9 @@
 
     <link href="{% static '/css/bootstrap.min.css' %}" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'datatables/datatables.css' %}" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.0.4/js.cookie.js"></script>
     <script src="{% static 'datatables/datatables.js' %}"></script>
     <script src="{% static 'js/main_site_function.js' %}"></script>
@@ -42,49 +44,13 @@
         background-color: #0074e4;
         color: white;
       }
-      .chat-box {
-        width: 100%;
-        height: 300px;
+      #ai-insight {
         background: #ffffff;
         border: 1px solid #cfd8dc;
         border-radius: 8px;
+        padding: 1rem;
         margin-bottom: 2rem;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      .chat-header {
-        background: #0074e4;
-        color: white;
-        padding: 0.75rem;
-        text-align: center;
-        font-weight: 600;
-      }
-      .chat-messages {
-        flex-grow: 1;
-        padding: 0.75rem;
-        overflow-y: auto;
-        font-size: 14px;
-        background-color: #f0f4f8;
-        color: #333;
-      }
-      .chat-input {
-        display: flex;
-        border-top: 1px solid #cfd8dc;
-        background-color: #fff;
-      }
-      .chat-input input {
-        flex-grow: 1;
-        border: none;
-        padding: 0.75rem;
-        color: #1e2e3e;
-      }
-      .chat-input button {
-        border: none;
-        background: #0074e4;
-        color: white;
-        padding: 0.75rem 1rem;
-        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
       #intel_table_wrapper {
         background: #ffffff;
@@ -100,6 +66,11 @@
       table.dataTable td {
         border-color: #ddd;
       }
+      .modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - (0.5rem * 2));
+}
     </style>
   </head>
   <body>
@@ -111,17 +82,9 @@
     <div class="container mt-4">
       <h2>Hillsborough County Auction Insights</h2>
 
-      <div class="row">
-        <div class="col-12">
-          <div class="chat-box">
-            <div class="chat-header">Real Estate Agent</div>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input">
-              <input type="text" id="chatInput" placeholder="Type your question..." />
-              <button onclick="sendMessage()">Send</button>
-            </div>
-          </div>
-        </div>
+      <div id="ai-insight">
+        <h5>AI Insight Window</h5>
+        <div id="aiContent" style="white-space: pre-wrap; font-size: 0.95rem; color: #333;"></div>
       </div>
 
       <div class="filter-buttons">
@@ -144,6 +107,7 @@
             <th>Zillow View</th>
             <th>Google View</th>
             <th>Taxes</th>
+            <th>AI Assistance</th>
             <th>Assessed Value</th>
             <th>Max Bid</th>
             <th>Is Watching</th>
@@ -153,5 +117,42 @@
         </thead>
       </table>
     </div>
+    <div class="modal fade" id="pleaseWaitModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" aria-labelledby="pleaseWaitModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="pleaseWaitModalLabel">Please Wait...</h5>
+          </div>
+          <div class="modal-body">
+            <div class="spinner-border" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function auditWithAI(caseNumber) {
+        showPleaseWait();
+
+        $.ajax({
+          url: "/auction/ai_audit/",  // You'll need to create this Django view
+          type: "POST",
+          data: {
+            case: caseNumber,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          success: function (result) {
+            hidePleaseWait();
+            document.getElementById("aiContent").textContent = result.insight || "No insight available.";
+          },
+          error: function () {
+            hidePleaseWait();
+
+            document.getElementById("aiContent").textContent = "AI audit failed. Please try again.";
+          }
+        });
+      }
+    </script>
   </body>
 </html>
