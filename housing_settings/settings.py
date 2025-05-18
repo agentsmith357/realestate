@@ -18,8 +18,8 @@ from pathlib import Path
 import os 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(os.path.join(BASE_DIR,'settings.env'))
-print(os.path.join(BASE_DIR,'settings.env'))
+load_dotenv(os.path.join(BASE_DIR,'.env'))
+print(os.path.join(BASE_DIR,'.env'))
 print(os.environ.get("MYSQL_DRIVER"))
 MYSQL_DRIVER_NAME =  os.environ.get("MYSQL_DRIVER")
 MYSQL_DB_NAME = os.environ.get("MYSQL_DB_NAME")
