@@ -1,0 +1,54 @@
+image: registry.gitlab.com/home4025035/house_audit:latest
+stages:
+    - security
+    - build
+    - test
+
+
+variables:
+  DJANGO_SETTINGS_MODULE: "housing_settings.settings"  
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - housing_venv/
+    - ~/.cache/pip
+
+security-scan:
+  image: gitguardian/ggshield:latest
+  stage: security
+  script:
+    - export GGSHIELD_API_KEY=c99d757ccc02aaf9eeaF2F424C6FafFffCBaeDc7efa8E17a821efeaBaeadBdAa8Bf6EeD
+    - ggshield auth login
+    - ggshield check
+    - ggshield secret scan ci
+
+build-job:
+  stage: build
+  script:
+        - python -m venv housing_venv
+        #- export PYTHONPATH="$PYTHONPATH:/house_audit/housing_settings"
+        - ls -la
+        - source housing_venv/bin/activate
+        - pip install --cache-dir ~/.cache/pip -r requirements.txt
+        - echo $PYTHONPATH
+  artifacts:
+    paths:
+      - housing_venv/
+
+test-job:
+  stage: test
+  script:
+      - echo $DJANGO_SETTINGS_MODULE
+      - pwd
+      - ls -la
+      - ls -la housing_venv 
+      - ls -la housing_settings 
+      - source housing_venv/bin/activate
+      - pip list
+      - which python
+      - python manage.py test
+
+  dependencies:
+    - build-job
+
