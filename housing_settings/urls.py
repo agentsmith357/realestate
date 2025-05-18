@@ -18,5 +18,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('auction/',include("houses.urls")),
+    path('',include("houses.urls")),
+
 ]
 

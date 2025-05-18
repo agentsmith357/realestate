@@ -252,7 +252,7 @@ def download_information():
 def save(houses):
     import pyodbc
     print("connecting to db...")
-    conn = pyodbc.connect("""Driver={MySQL ODBC 8.0 Unicode Driver};
+    conn = pyodbc.connect("""Driver={MySQL ODBC 9.3 Unicode Driver};
         Server=192.168.1.232;
         Database=realestate;
         UID=admin;

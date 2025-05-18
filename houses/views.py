@@ -1,5 +1,5 @@
 from datetime import datetime,timedelta
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import json
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +7,33 @@ import pyodbc
 from django.http import JsonResponse
 from django.conf import settings
 
+
+# LOGIN ATTEMPT — set cookie with username
+@csrf_exempt
+def login_attempt(request):
+    if request.method == "GET":
+        return render(request, "index.html")
+    else:
+        conn = pyodbc.connect(f"""Driver={settings.MYSQL_DRIVER_NAME};
+            Server={settings.MYSQL_IP};
+            Database={settings.MYSQL_DB_NAME};
+            UID={settings.MYSQL_USER};
+            PWD={settings.MYSQL_PASSWORD}""")
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT username FROM account 
+                WHERE username = ? AND password = ?;
+            """, request.POST.get("username"), request.POST.get("password"))
+            data = cur.fetchone()
+
+        if data is not None:
+            response = JsonResponse({"data": True})
+            expires = datetime.strftime(datetime.utcnow() + timedelta(days=3650), "%a, %d-%b-%Y %H:%M:%S GMT")
+            response.set_cookie("hcp_realstate", request.POST.get("username"), expires=expires)
+            return response
+        else:
+            return JsonResponse({"data": False})
+		
 first_name = "Jelani"
 last_name = "Jenkins"
 full_name = first_name + " " + last_name
@@ -21,32 +48,7 @@ def index(request):
 def login(request):
 	if request.method =="GET":
 	    return render(request,"signin.html")
-					
-@csrf_exempt
-def login_attempt(request):
-	if request.method =="GET":
-		return render(request,"index.html")
-	else:
-		print("connecting to db...")
-		conn = pyodbc.connect(f"""Driver={settings.MYSQL_DRIVER_NAME};
-				Server={settings.MYSQL_IP};
-				Database={settings.MYSQL_DB_NAME};
-				UID={settings.MYSQL_USER};
-				PWD={settings.MYSQL_PASSWORD}""")
-		print("connected.")
-		data= None
-		with conn.cursor() as cur:
-			cur.execute("""SELECT 
-				username
-				,password				
-				FROM account where username = ? and password  =?;""",request.POST.get("username"),request.POST.get("password"))
-			data = cur.fetchone()
-		if data is not None:
-			return JsonResponse({"data":True})
-		else:
-			return JsonResponse({"data":False})
-
-
+	
 
 		
 @csrf_exempt
@@ -401,3 +403,11 @@ def filter_data(request):
 					}
 					for t in data]
 	return JsonResponse({'data':package})
+
+@csrf_exempt
+def validate_cookie(request):
+	username = request.COOKIES.get("hcp_realstate")
+	if not username:
+		return False
+	else:
+		return True
