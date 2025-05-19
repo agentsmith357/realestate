@@ -27,7 +27,7 @@ MYSQL_IP =  os.environ.get("MYSQL_IP")
 MYSQL_USER = os.environ.get("MYSQL_DB_USER")
 MYSQL_PASSWORD = os.environ.get("MYSQL_DB_PASSWORD")
 AI_KEY = os.environ.get("AI_KEY")
-
+RAPIDAPI_KEY= os.environ.get("RAPIDAPI_KEY")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 

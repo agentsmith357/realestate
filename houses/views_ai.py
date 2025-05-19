@@ -5,10 +5,20 @@ from django.db import connections
 from datetime import datetime
 import os
 import random
+import requests
 import openai
 from openai import OpenAI
 from django.views.decorators.csrf import csrf_exempt
 import pyodbc
+
+# Set your RapidAPI Key
+rapidapi_key = settings.RAPIDAPI_KEY
+
+headers = {
+    "X-RapidAPI-Key": rapidapi_key,
+    "X-RapidAPI-Host": ""
+}
+
 
 @csrf_exempt
 def ai_audit(request):
@@ -37,17 +47,19 @@ def ai_audit(request):
             return JsonResponse({"insight": f"No property found for case {case_number}."})
 
         address, judgment, assessed_value, max_bid = row
+        data = gather_real_estate_data(address)
 
         # Step 2: Construct a detailed prompt
         prompt = (
-            f"You're an AI investment advisor without access to realtime data. Analyze this auction property and provide response. I understand you don't have access to realtime data. Just do it!!!"
+            f"Analyze the following real estate data for {address}"
             f"- Case Number: {case_number}\n"
             f"- Address: {address}\n"
             f"- Final Judgment: ${judgment}\n"
             f"- Assessed Value: ${assessed_value}\n"
             f"- Max Recommended Bid: ${max_bid}\n"
-            f"Give insights about its value, risks, investment potential, and whether it's a good buy."
+            f"- Audit data: {data}"
         )
+        print(prompt)
 
         # Step 3: Send to OpenAI
         try:
@@ -55,7 +67,7 @@ def ai_audit(request):
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a real estate investment analyst."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content":prompt}
                 ],
                 temperature=0.7,
                 max_tokens=400
@@ -68,3 +80,38 @@ def ai_audit(request):
 
     return JsonResponse({"insight": "Invalid request method."})
 
+
+
+# Zillow Example
+def get_zillow_data(location):
+    url = "https://zillow56.p.rapidapi.com/search"
+    headers["X-RapidAPI-Host"] = "zillow56.p.rapidapi.com"
+    params = {"location": location}
+    response = requests.get(url, headers=headers, params=params)
+    return {"source": "Zillow", "data": str(response.json())}
+
+# Realtor Example
+def get_realtor_data(location):
+    url = "https://realtor.p.rapidapi.com/locations/auto-complete"
+    headers["X-RapidAPI-Host"] = "realtor.p.rapidapi.com"
+    params = {"input": location}
+    response = requests.get(url, headers=headers, params=params)
+    return {"source": "Realtor", "data": str(response.json())}
+
+# Mashvisor (if available)
+def get_mashvisor_data(location):
+    url = "https://mashvisor-api.p.rapidapi.com/rental-rates"
+    headers["X-RapidAPI-Host"] = "mashvisor-api.p.rapidapi.com"
+    params = {"state": "FL", "city": location.split(",")[0]}
+    response = requests.get(url, headers=headers, params=params)
+    return {"source": "Mashvisor", "data": str(response.json())}
+
+# Combine all data
+def gather_real_estate_data(location):
+    sources = [
+        get_zillow_data(location),
+       # get_realtor_data(location),
+       #get_mashvisor_data(location)
+    ]
+    combined = "\n".join([f"{s['source']}: {s['data']}" for s in sources])
+    return combined
